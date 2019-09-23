@@ -21,9 +21,9 @@ fi
 kubectl apply -f epsagon-role.yaml
 
 if [ `which python` ] ; then
-    kubectl -n epsagon-monitoring get secrets `kubectl -n epsagon-monitoring get secrets | grep 'epsagon-monitoring-token' | awk '{print $1}'` -o json | python -c 'import sys, json; print(json.load(sys.stdin)["data"]["token"])' > epsagon_role_token
+    kubectl -n epsagon-monitoring get secrets `kubectl -n epsagon-monitoring get secrets | grep 'epsagon-monitoring-token' | awk '{print $1}'` -o json | python -c 'import sys, json; print(json.load(sys.stdin)["data"]["token"])' | base64 -d > epsagon_role_token
 else
-    kubectl -n epsagon-monitoring get secrets `kubectl -n epsagon-monitoring get secrets | grep 'epsagon-monitoring-token' | awk '{print $1}'` -o json | grep '\"token\"' | cut -d: -f2 | cut -d'"' -f2 > epsagon_role_token
+    kubectl -n epsagon-monitoring get secrets `kubectl -n epsagon-monitoring get secrets | grep 'epsagon-monitoring-token' | awk '{print $1}'` -o json | grep '\"token\"' | cut -d: -f2 | cut -d'"' -f2 | base64 -d > epsagon_role_token
 fi
 
 echo ""
