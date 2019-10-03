@@ -25,11 +25,15 @@ rules:
   - endpoints
   - pods
   - pods/proxy
+  - namespaces
   verbs: ["get", "list", "watch"]
 - apiGroups:
   - extensions
   resources:
   - ingresses
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["extensions", "apps"]
+  resources: ["deployments"]
   verbs: ["get", "list", "watch"]
 - nonResourceURLs: ["/metrics"]
   verbs: ["get"]
