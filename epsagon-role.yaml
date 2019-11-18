@@ -25,6 +25,7 @@ rules:
   - endpoints
   - pods
   - pods/proxy
+  - pods/log
   - namespaces
   verbs: ["get", "list", "watch"]
 - apiGroups:
