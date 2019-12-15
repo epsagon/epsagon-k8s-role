@@ -89,8 +89,7 @@ function apply_role {
 
 function apply_epsagon_on_all_contexts {
     echo "Welcome to Epsagon!"
-    NUMBER_OF_CONTEXTS=$((`kubectl config get-contexts | wc -l` - 1 ))
-    for context in `kubectl config get-contexts | tail -${NUMBER_OF_CONTEXTS} | sed s/^*//  | awk {'print $1'}`; do
+    for context in `kubectl config get-contexts --no-headers | awk {'gsub(/^\*/, ""); print $1'}`; do
         echo ""
         echo "Now installing Epsagon to: $context"
         echo -n "Would you like to proceed? [Y/N] "
@@ -98,6 +97,7 @@ function apply_epsagon_on_all_contexts {
         if [ "$answer" == "Y" ]; then
             apply_role $1 $context
         else
+            echo "skipping this cluster"
             continue
         fi
     done
