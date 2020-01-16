@@ -94,7 +94,10 @@ function apply_epsagon_on_all_contexts {
         echo "Now installing Epsagon to: $context"
         echo -n "Would you like to proceed? [Y/N] "
         read answer
-        if [ ${answer^^} == "Y" ]; then
+        if [ ${answer} == 'y' ] ; then
+            answer='Y'
+        fi
+        if [ ${answer} == "Y" ]; then
             apply_role $1 $context
         else
             echo "skipping this cluster"
