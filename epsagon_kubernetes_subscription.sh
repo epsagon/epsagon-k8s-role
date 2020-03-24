@@ -66,22 +66,22 @@ function send_to_epsagon {
 
 function apply_role {
     EPSAGON_TOKEN=$1
-    KUBECTL="kubectl"
     CONFIG=$2
+    KUBECTL="kubectl --kubeconfig=${CONFIG}"
     if [ ! -z $3 ] ; then
         CONTEXT=$3
-        KUBECTL="kubectl --context ${CONTEXT}"
+        KUBECTL="kubectl --context ${CONTEXT} --kubeconfig=${CONFIG}"
         echo "Applying ${ROLE_FILE} to ${CONTEXT}"
     else
         echo "Applying ${ROLE_FILE}"
     fi
     echo ""
     ${KUBECTL} apply -f ${ROLE_FILE} --kubeconfig=${CONFIG}
-    SA_SECRET_NAME=`${KUBECTL} -n epsagon-monitoring get secrets --kubeconfig=${CONFIG} | grep 'epsagon-monitoring-token' | awk '{print $1}'`
+    SA_SECRET_NAME=`${KUBECTL} -n epsagon-monitoring get secrets | grep 'epsagon-monitoring-token' | awk '{print $1}'`
     if [ `which python` ] ; then
-        ROLE_TOKEN=`${KUBECTL} -n epsagon-monitoring get secrets $SA_SECRET_NAME -o json --kubeconfig=${CONFIG} | python -c 'import sys, json; print(json.load(sys.stdin)["data"]["token"])' | base64 --decode`
+        ROLE_TOKEN=`${KUBECTL} -n epsagon-monitoring get secrets $SA_SECRET_NAME -o json | python -c 'import sys, json; print(json.load(sys.stdin)["data"]["token"])' | base64 --decode`
     else
-        ROLE_TOKEN=`${KUBECTL} -n epsagon-monitoring get secrets $SA_SECRET_NAME -o json --kubeconfig=${CONFIG} | grep '\"token\"' | cut -d: -f2 | cut -d'"' -f2 | base64 --decode`
+        ROLE_TOKEN=`${KUBECTL} -n epsagon-monitoring get secrets $SA_SECRET_NAME -o json | grep '\"token\"' | cut -d: -f2 | cut -d'"' -f2 | base64 --decode`
     fi
 
     send_to_epsagon $EPSAGON_TOKEN $ROLE_TOKEN $CONFIG $CONTEXT
