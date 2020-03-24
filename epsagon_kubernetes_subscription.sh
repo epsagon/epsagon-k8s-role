@@ -92,8 +92,7 @@ function does_config_file_exist {
     if [ -f ~/.kube/config ]; then
         return 0
     fi
-    IFS=';' read -ra ADDR <<< $KUBECONFIG
-    for i in ${ADDR[@]}; do
+    for i in `echo $KUBECONFIG | tr ':' '\n'`; do
         if [ -f "$i" ]; then
             return 0
         fi
