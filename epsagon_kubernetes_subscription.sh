@@ -8,6 +8,7 @@ function usage {
 
 ROLE_FILE=epsagon-role.yaml
 ROLE_URL=https://raw.githubusercontent.com/epsagon/epsagon-k8s-role/master/epsagon-role.yaml
+RANCHER_TOKEN=""
 
 function fetch_epsagon_role {
     echo "Fetching ${ROLE_FILE}"
@@ -77,14 +78,18 @@ function apply_role {
     fi
     echo ""
     ${KUBECTL} apply -f ${ROLE_FILE}
-    SA_SECRET_NAME=`${KUBECTL} -n epsagon-monitoring get secrets | grep 'epsagon-monitoring-token' | awk '{print $1}'`
-    if [ `which python` ] ; then
-        ROLE_TOKEN=`${KUBECTL} -n epsagon-monitoring get secrets $SA_SECRET_NAME -o json | python -c 'import sys, json; print(json.load(sys.stdin)["data"]["token"])' | base64 --decode`
+    if [ ! -z $RANCHER_TOKEN ] ; then
+        send_to_epsagon $EPSAGON_TOKEN $RANCHER_TOKEN $CONFIG $CONTEXT
     else
-        ROLE_TOKEN=`${KUBECTL} -n epsagon-monitoring get secrets $SA_SECRET_NAME -o json | grep '\"token\"' | cut -d: -f2 | cut -d'"' -f2 | base64 --decode`
-    fi
+        SA_SECRET_NAME=`${KUBECTL} -n epsagon-monitoring get secrets | grep 'epsagon-monitoring-token' | awk '{print $1}'`
+        if [ `which python` ] ; then
+            ROLE_TOKEN=`${KUBECTL} -n epsagon-monitoring get secrets $SA_SECRET_NAME -o json | python -c 'import sys, json; print(json.load(sys.stdin)["data"]["token"])' | base64 --decode`
+        else
+            ROLE_TOKEN=`${KUBECTL} -n epsagon-monitoring get secrets $SA_SECRET_NAME -o json | grep '\"token\"' | cut -d: -f2 | cut -d'"' -f2 | base64 --decode`
+        fi
 
-    send_to_epsagon $EPSAGON_TOKEN $ROLE_TOKEN $CONFIG $CONTEXT
+        send_to_epsagon $EPSAGON_TOKEN $ROLE_TOKEN $CONFIG $CONTEXT
+    fi
 
 }
 
@@ -107,6 +112,12 @@ function apply_epsagon_on_all_contexts {
         echo "Could not find any config file for kubectl"
         echo 'Please insert your kubectl config file path:'
         read config_file_path
+    fi
+    echo -n "Do you use Rancher Management System [Y/N] "
+    read answer
+    if [ ${answer} == 'y' ] ; then
+        echo 'Please insert your Rancher API Key:'
+        read RANCHER_TOKEN
     fi
     for context in `kubectl config get-contexts --no-headers --kubeconfig=${config_file_path} | awk {'gsub(/^\*/, ""); print $1'}`; do
         echo ""
