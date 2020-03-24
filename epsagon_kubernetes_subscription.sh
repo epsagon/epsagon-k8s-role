@@ -79,9 +79,9 @@ function apply_role {
     ${KUBECTL} apply -f ${ROLE_FILE}
     SA_SECRET_NAME=`${KUBECTL} -n epsagon-monitoring get secrets | grep 'epsagon-monitoring-token' | awk '{print $1}'`
     if [ `which python` ] ; then
-        ROLE_TOKEN=`${KUBECTL} -n epsagon-monitoring get secrets $SA_SECRET_NAME -o json | python -c 'import sys, json; print(json.load(sys.stdin)["data"]["token"])' | base64 --decode`
+        ROLE_TOKEN=`${KUBECTL} -n epsagon-monitoring get secrets $SA_SECRET_NAME -o json --kubeconfig=${CONFIG} | python -c 'import sys, json; print(json.load(sys.stdin)["data"]["token"])' | base64 --decode`
     else
-        ROLE_TOKEN=`${KUBECTL} -n epsagon-monitoring get secrets $SA_SECRET_NAME -o json | grep '\"token\"' | cut -d: -f2 | cut -d'"' -f2 | base64 --decode`
+        ROLE_TOKEN=`${KUBECTL} -n epsagon-monitoring get secrets $SA_SECRET_NAME -o json --kubeconfig=${CONFIG} | grep '\"token\"' | cut -d: -f2 | cut -d'"' -f2 | base64 --decode`
     fi
 
     send_to_epsagon $EPSAGON_TOKEN $ROLE_TOKEN $CONFIG $CONTEXT
