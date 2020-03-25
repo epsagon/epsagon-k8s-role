@@ -34,9 +34,10 @@ function fetch_epsagon_role {
 function send_to_epsagon {
     EPSAGON_TOKEN=$1
     ROLE_TOKEN=$2
-    if [ $# == 3 ]; then
-        CONTEXT=$3
-        SERVER=`kubectl config view | grep -B 3 -E "[[:space:]]$CONTEXT\>" | grep -E "\<server: " | awk '{print $2}'`
+    CONFIG=$3
+    if [ $# == 4 ]; then
+        CONTEXT=$4
+        SERVER=`kubectl config view --kubeconfig=${CONFIG} | grep -B 3 -E "[[:space:]]$CONTEXT\>" | grep -E "\<server: " | awk '{print $2}'`
         if [ -z $SERVER ] ; then
             echo "Could not find the server endpoint for context: ${CONTEXT}."
             echo " Please type the server endpoint:"
@@ -65,17 +66,17 @@ function send_to_epsagon {
 
 function apply_role {
     EPSAGON_TOKEN=$1
-    KUBECTL="kubectl"
-    if [ ! -z $2 ] ; then
-        CONTEXT=$2
-        KUBECTL="kubectl --context ${CONTEXT}"
+    CONFIG=$2
+    KUBECTL="kubectl --kubeconfig=${CONFIG}"
+    if [ ! -z $3 ] ; then
+        CONTEXT=$3
+        KUBECTL="kubectl --context ${CONTEXT} --kubeconfig=${CONFIG}"
         echo "Applying ${ROLE_FILE} to ${CONTEXT}"
     else
         echo "Applying ${ROLE_FILE}"
     fi
     echo ""
     ${KUBECTL} apply -f ${ROLE_FILE}
-
     SA_SECRET_NAME=`${KUBECTL} -n epsagon-monitoring get secrets | grep 'epsagon-monitoring-token' | awk '{print $1}'`
     if [ `which python` ] ; then
         ROLE_TOKEN=`${KUBECTL} -n epsagon-monitoring get secrets $SA_SECRET_NAME -o json | python -c 'import sys, json; print(json.load(sys.stdin)["data"]["token"])' | base64 --decode`
@@ -83,13 +84,31 @@ function apply_role {
         ROLE_TOKEN=`${KUBECTL} -n epsagon-monitoring get secrets $SA_SECRET_NAME -o json | grep '\"token\"' | cut -d: -f2 | cut -d'"' -f2 | base64 --decode`
     fi
 
-    send_to_epsagon $EPSAGON_TOKEN $ROLE_TOKEN $CONTEXT
+    send_to_epsagon $EPSAGON_TOKEN $ROLE_TOKEN $CONFIG $CONTEXT
 
+}
+
+function does_config_file_exist {
+    if [ -f ~/.kube/config ]; then
+        return 0
+    fi
+    for i in `echo $KUBECONFIG | tr ':' '\n'`; do
+        if [ -f "$i" ]; then
+            return 0
+        fi
+    done
+    return 1
 }
 
 function apply_epsagon_on_all_contexts {
     echo "Welcome to Epsagon!"
-    for context in `kubectl config get-contexts --no-headers | awk {'gsub(/^\*/, ""); print $1'}`; do
+    config_file_path="${HOME}/.kube/config"
+    if ! does_config_file_exist; then
+        echo "Could not find any config file for kubectl"
+        echo 'Please insert your kubectl config file path:'
+        read config_file_path
+    fi
+    for context in `kubectl config get-contexts --no-headers --kubeconfig=${config_file_path} | awk {'gsub(/^\*/, ""); print $1'}`; do
         echo ""
         echo "Now installing Epsagon to: $context"
         echo -n "Would you like to proceed? [Y/N] "
@@ -98,7 +117,7 @@ function apply_epsagon_on_all_contexts {
             answer='Y'
         fi
         if [ ${answer} == "Y" ]; then
-            apply_role $1 $context
+            apply_role $1 $config_file_path $context
         else
             echo "skipping this cluster"
             continue
