@@ -113,7 +113,7 @@ function apply_epsagon_on_all_contexts {
         echo 'Please insert your kubectl config file path:'
         read config_file_path
     fi
-    echo -n "Are you using Rancher Management System [Y/N] "
+    echo -n "Are you using Rancher Management System? [Y/N] "
     read answer
     if [ ${answer} == 'y' ] ; then
         echo 'Please insert your Rancher API Key:'
