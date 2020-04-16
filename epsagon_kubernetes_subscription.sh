@@ -105,17 +105,29 @@ function does_config_file_exist {
     return 1
 }
 
+function is_positive_answer {
+    answer=$1
+    if [ ${answer} == 'y' ] ; then
+        answer='Y'
+    fi
+    if [ ${answer} == 'Y' ] ; then
+        return 0;
+    fi
+    return 1;
+}
+
 function apply_epsagon_on_all_contexts {
     echo "Welcome to Epsagon!"
     config_file_path="${HOME}/.kube/config"
-    if ! does_config_file_exist; then
+    if [ ! does_config_file_exist ] ; then
         echo "Could not find any config file for kubectl"
         echo 'Please insert your kubectl config file path:'
         read config_file_path
     fi
     echo -n "Are you using Rancher Management System? [Y/N] "
     read answer
-    if [[ ${answer} == 'y' || ${answer} == 'Y' ]] ; then
+    is_positive_answer $answer
+    if [ $? -eq 0 ] ; then
         echo 'Please insert your Rancher API Key:'
         read RANCHER_TOKEN
     fi
@@ -124,10 +136,8 @@ function apply_epsagon_on_all_contexts {
         echo "Now installing Epsagon to: $context"
         echo -n "Would you like to proceed? [Y/N] "
         read answer
-        if [ ${answer} == 'y' ] ; then
-            answer='Y'
-        fi
-        if [ ${answer} == "Y" ]; then
+        is_positive_answer $answer
+        if [ $? -eq 0 ] ; then
             apply_role $1 $config_file_path $context
         else
             echo "skipping this cluster"
