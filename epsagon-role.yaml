@@ -27,6 +27,7 @@ rules:
   - pods/proxy
   - pods/log
   - namespaces
+  - configmaps
   verbs: ["get", "list", "watch"]
 - apiGroups:
   - extensions
