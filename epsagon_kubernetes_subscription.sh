@@ -38,7 +38,7 @@ function send_to_epsagon {
     CONFIG=$3
     if [ $# == 4 ]; then
         CONTEXT=$4
-        SERVER=`kubectl config view --kubeconfig=${CONFIG} | grep -B 3 -E "[[:space:]]$CONTEXT\>" | grep -E "\<server: " | awk '{print $2}'`
+        SERVER=`kubectl config view --kubeconfig=${CONFIG} | grep -B 3 -E "[[:space:]]$CONTEXT\>" | grep -E "\<server: " | awk '{print $2}' | head -1`
         if [ -z $SERVER ] ; then
             echo "Could not find the server endpoint for context: ${CONTEXT}."
             echo " Please type the server endpoint:"
