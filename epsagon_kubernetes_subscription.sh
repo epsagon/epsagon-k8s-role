@@ -115,7 +115,7 @@ function apply_epsagon_on_all_contexts {
     fi
     echo -n "Are you using Rancher Management System? [Y/N] "
     read answer
-    if [ ${answer} == 'y' ] ; then
+    if [[ ${answer} == 'y' || ${answer} == 'Y' ]] ; then
         echo 'Please insert your Rancher API Key:'
         read RANCHER_TOKEN
     fi
