@@ -1,7 +1,7 @@
 #! /bin/bash
 
 ## Script to attach Epsagon Role to kubernetes
-
+source ./common.sh
 function usage {
     echo "Usage: epsagon_kubernetes_subscription.sh EPSAGON_TOKEN"
 }
@@ -91,29 +91,6 @@ function apply_role {
         send_to_epsagon $EPSAGON_TOKEN $ROLE_TOKEN $CONFIG $CONTEXT
     fi
 
-}
-
-function does_config_file_exist {
-    if [ -f ~/.kube/config ]; then
-        return 0
-    fi
-    for i in `echo $KUBECONFIG | tr ':' '\n'`; do
-        if [ -f "$i" ]; then
-            return 0
-        fi
-    done
-    return 1
-}
-
-function is_positive_answer {
-    answer=$1
-    if [ ${answer} == 'y' ] ; then
-        answer='Y'
-    fi
-    if [ ${answer} == 'Y' ] ; then
-        return 0;
-    fi
-    return 1;
 }
 
 function apply_epsagon_on_all_contexts {
