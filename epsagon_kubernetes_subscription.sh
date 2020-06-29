@@ -13,8 +13,8 @@ RANCHER_TOKEN=""
 function fetch_epsagon_role {
     echo "Fetching ${ROLE_FILE}"
     if [ -f $ROLE_FILE ] ; then
-        echo "${ROLE_FILE} already exists - using that file"
-        return 0
+        echo "${ROLE_FILE} already exists - replacing it"
+        rm -f $ROLE_FILE
     fi
     if [ `which wget` ] ; then
         wget $ROLE_URL
@@ -65,6 +65,32 @@ function send_to_epsagon {
     fi
 }
 
+function remove_mutation_controller {
+    if [ -d epsagon-mutation-controller ] ; then
+        rm -rf epsagon-mutation-controller
+    fi
+}
+
+function clone_mutation_controller {
+    remove_mutation_controller
+    if [ `which git` ] ; then
+        git clone git@github.com:epsagon/epsagon-mutation-controller.git
+    fi
+}
+
+
+function apply_mutation_controller {
+    EPSAGON_TOKEN=$1
+    CONFIG=$2
+    CONTEXT=$3
+    if [ -d epsagon-mutation-controller ] ; then
+        ORIGINAL_DIR=`pwd`
+        cd epsagon-mutation-controller/kubernetes
+        source ./deploy.sh --context $CONTEXT --kubeconfig $CONFIG --token $EPSAGON_TOKEN
+        cd $ORIGINAL_DIR
+    fi
+}
+
 function apply_role {
     EPSAGON_TOKEN=$1
     CONFIG=$2
@@ -87,6 +113,7 @@ function apply_role {
         else
             ROLE_TOKEN=`${KUBECTL} -n epsagon-monitoring get secrets $SA_SECRET_NAME -o json | grep '\"token\"' | cut -d: -f2 | cut -d'"' -f2 | base64 --decode`
         fi
+        apply_mutation_controller $EPSAGON_TOKEN $CONFIG $CONTEXT
 
         send_to_epsagon $EPSAGON_TOKEN $ROLE_TOKEN $CONFIG $CONTEXT
     fi
@@ -150,5 +177,7 @@ if [ $# -ne 1 ] ; then
     usage
 else
     fetch_epsagon_role
+    clone_mutation_controller
     apply_epsagon_on_all_contexts $1
+    remove_mutation_controller
 fi
