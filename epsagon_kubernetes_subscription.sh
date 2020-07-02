@@ -74,7 +74,7 @@ function remove_mutation_controller {
 function clone_mutation_controller {
     remove_mutation_controller
     if [ `which git` ] ; then
-        git clone git@github.com:epsagon/epsagon-mutation-controller.git
+        git clone https://github.com/epsagon/epsagon-mutation-controller.git
     fi
 }
 
