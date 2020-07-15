@@ -32,6 +32,32 @@ function fetch_epsagon_role {
     fi
 }
 
+function test_connection {
+    DATA=$1
+    SERVER=${2%,}
+    echo "Testing Epsagon connection to server ${SERVER}..."
+    RESULT="$(curl -X POST https://api.epsagon.com/containers/k8s/test_cluster_connection -d $DATA -H 'Content-Type: application/json')"
+    #Expected Response format:
+    # {{
+    #   "connection_status": "successful" / "failed",
+    #   "reason": "" # Optional, failure reason string, only relevant if "status"=="failed"
+    # }, "status": 200}
+    REQUEST_STATUS=<<< "$RESULT" | grep -o -E "\"status\":[0-9]+" | awk -F\: '{print $2}' 
+    ERROR= <<< "$RESULT" | grep -o -E "\"reason\":\".+\"" | awk -F\: '{print $2}' 
+    if [ "$REQUEST_STATUS" == "200" ]; then
+        if [ -z "$ERROR" ]; then
+            echo "Succesfully connected to server ${SERVER}"
+            return 0
+        else
+            echo "Could not connect to server ${SERVER}, error message: ${ERROR}"
+            return 1
+        fi
+    else
+        echo "Failed to test connection to server, please contact us"
+        return 1
+    fi
+}
+
 function send_to_epsagon {
     EPSAGON_TOKEN=$1
     ROLE_TOKEN=$2
@@ -49,8 +75,11 @@ function send_to_epsagon {
         echo "Can't add a cluster without context"
     fi
     if [ `which curl` ] ; then
-        curl -X POST https://api.epsagon.com/containers/k8s/add_cluster_by_token -d "{\"k8s_cluster_url\": \"$SERVER\", \"epsagon_token\": \"$EPSAGON_TOKEN\", \"cluster_token\": \"$ROLE_TOKEN\"}" -H 'Content-Type: application/json'
-        echo ""
+        DATA="{\"k8s_cluster_url\": \"$SERVER\", \"epsagon_token\": \"$EPSAGON_TOKEN\", \"cluster_token\": \"$ROLE_TOKEN\"}"
+        if test_connection $DATA $SERVER; then 
+            curl -X POST https://api.epsagon.com/containers/k8s/add_cluster_by_token -d $DATA -H 'Content-Type: application/json'
+            echo ""
+        fi
     else
         echo "Could not find 'curl' command to send data to epsagon, please enter manually"
         echo "server=${SERVER}"
