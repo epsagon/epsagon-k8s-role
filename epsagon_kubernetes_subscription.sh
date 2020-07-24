@@ -36,7 +36,7 @@ function test_connection {
     DATA=$1
     SERVER=${2%,}
     echo "Testing Epsagon connection to server ${SERVER}..."
-    RESULT="$(curl -X POST https://api.epsagon.com/containers/k8s/test_cluster_connection -d $DATA -H 'Content-Type: application/json')"
+    RESULT="$(curl -X POST https://api.epsagon.com/containers/k8s/check_cluster_connection -d $DATA -H 'Content-Type: application/json')"
     #Expected Response format:
     # {{
     #   "connection_status": "successful" / "failed",
