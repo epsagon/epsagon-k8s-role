@@ -33,18 +33,19 @@ function fetch_epsagon_role {
 }
 
 function test_connection {
-    DATA=$1
-    SERVER=${2%,}
+    SERVER=$1
+    EPSAGON_TOKEN=$2
+    ROLE_TOKEN=$3
     echo "Testing Epsagon connection to server ${SERVER}..."
-    RESULT="$(curl -X POST https://api.epsagon.com/containers/k8s/check_cluster_connection -d $DATA -H 'Content-Type: application/json')"
+    RESULT=`curl -X POST https://api.epsagon.com/containers/k8s/check_cluster_connection -d "{\"k8s_cluster_url\": \"$SERVER\", \"epsagon_token\": \"$EPSAGON_TOKEN\", \"cluster_token\": \"$ROLE_TOKEN\"}" -H 'Content-Type: application/json'`
     #Expected Response format:
-    # {{
+    # {
     #   "connection_status": "successful" / "failed",
     #   "reason": "" # Optional, failure reason string, only relevant if "status"=="failed"
-    # }, "status": 200}
-    REQUEST_STATUS=<<< "$RESULT" | grep -o -E "\"status\":[0-9]+" | awk -F\: '{print $2}' 
-    ERROR= <<< "$RESULT" | grep -o -E "\"reason\":\".+\"" | awk -F\: '{print $2}' 
-    if [ "$REQUEST_STATUS" == "200" ]; then
+    # }
+    CONNECTION_STATUS=`echo $RESULT | grep -o -E "\"connection_status\": \"[^\"]+\"" | awk -F\: '{print $2}'`
+    if [ ! -z $CONNECTION_STATUS ]; then
+        ERROR=`echo $RESULT | grep -o -E "\"reason\": \".+\"" | awk '{print $2}'`
         if [ -z "$ERROR" ]; then
             echo "Succesfully connected to server ${SERVER}"
             return 0
@@ -75,9 +76,9 @@ function send_to_epsagon {
         echo "Can't add a cluster without context"
     fi
     if [ `which curl` ] ; then
-        DATA="{\"k8s_cluster_url\": \"$SERVER\", \"epsagon_token\": \"$EPSAGON_TOKEN\", \"cluster_token\": \"$ROLE_TOKEN\"}"
-        if test_connection $DATA $SERVER; then 
-            curl -X POST https://api.epsagon.com/containers/k8s/add_cluster_by_token -d $DATA -H 'Content-Type: application/json'
+        if test_connection $SERVER $EPSAGON_TOKEN $ROLE_TOKEN; then 
+            echo "Integrating cluster into epsagon..."
+            curl -X POST https://api.epsagon.com/containers/k8s/add_cluster_by_token -d "{\"k8s_cluster_url\": \"$SERVER\", \"epsagon_token\": \"$EPSAGON_TOKEN\", \"cluster_token\": \"$ROLE_TOKEN\"}" -H 'Content-Type: application/json'
             echo ""
         fi
     else
