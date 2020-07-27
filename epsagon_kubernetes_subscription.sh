@@ -32,6 +32,34 @@ function fetch_epsagon_role {
     fi
 }
 
+function test_connection {
+    SERVER=$1
+    EPSAGON_TOKEN=$2
+    ROLE_TOKEN=$3
+    echo "Testing Epsagon connection to server ${SERVER}..."
+    RESULT=`curl -X POST https://api.epsagon.com/containers/k8s/check_cluster_connection -d "{\"k8s_cluster_url\": \"$SERVER\", \"epsagon_token\": \"$EPSAGON_TOKEN\", \"cluster_token\": \"$ROLE_TOKEN\"}" -H 'Content-Type: application/json'`
+    #Expected Response format:
+    # {
+    #   "connection_status": "successful" / "failed",
+    #   "connection_failure_reason": "" # Optional, failure reason string, only relevant if "status"=="failed"
+    # }
+    CONNECTION_STATUS=`echo $RESULT | grep -o -E "\"connection_status\": \"[^\"]+\"" | awk -F\: '{print $2}'`
+    CONNECTION_STATUS=`echo $CONNECTION_STATUS | xargs`
+    if [ ! -z $CONNECTION_STATUS ]; then
+        if [ "$CONNECTION_STATUS" == "successful" ]; then
+            echo "Succesfully connected to server ${SERVER}"
+            return 0
+        else
+            ERROR=`echo $RESULT | grep -o -E "\"connection_failure_reason\": \".+\"" | awk '{print $2}'`
+            echo "Integration failed, see https://docs.epsagon.com/docs/environments-kubernetes. Error message: ${ERROR}"
+            return 1
+        fi
+    else
+        echo "Connection to Epsagon failed, please see: https://docs.epsagon.com/docs/environments-kubernetes"
+        return 1
+    fi
+}
+
 function send_to_epsagon {
     EPSAGON_TOKEN=$1
     ROLE_TOKEN=$2
@@ -49,8 +77,11 @@ function send_to_epsagon {
         echo "Can't add a cluster without context"
     fi
     if [ `which curl` ] ; then
-        curl -X POST https://api.epsagon.com/containers/k8s/add_cluster_by_token -d "{\"k8s_cluster_url\": \"$SERVER\", \"epsagon_token\": \"$EPSAGON_TOKEN\", \"cluster_token\": \"$ROLE_TOKEN\"}" -H 'Content-Type: application/json'
-        echo ""
+        if test_connection $SERVER $EPSAGON_TOKEN $ROLE_TOKEN; then 
+            echo "Integrating cluster into epsagon..."
+            curl -X POST https://api.epsagon.com/containers/k8s/add_cluster_by_token -d "{\"k8s_cluster_url\": \"$SERVER\", \"epsagon_token\": \"$EPSAGON_TOKEN\", \"cluster_token\": \"$ROLE_TOKEN\"}" -H 'Content-Type: application/json'
+            echo ""
+        fi
     else
         echo "Could not find 'curl' command to send data to epsagon, please enter manually"
         echo "server=${SERVER}"
