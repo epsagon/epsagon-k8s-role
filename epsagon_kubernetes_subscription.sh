@@ -41,20 +41,21 @@ function test_connection {
     #Expected Response format:
     # {
     #   "connection_status": "successful" / "failed",
-    #   "reason": "" # Optional, failure reason string, only relevant if "status"=="failed"
+    #   "connection_failure_reason": "" # Optional, failure reason string, only relevant if "status"=="failed"
     # }
     CONNECTION_STATUS=`echo $RESULT | grep -o -E "\"connection_status\": \"[^\"]+\"" | awk -F\: '{print $2}'`
+    CONNECTION_STATUS=`echo $CONNECTION_STATUS | xargs`
     if [ ! -z $CONNECTION_STATUS ]; then
-        ERROR=`echo $RESULT | grep -o -E "\"reason\": \".+\"" | awk '{print $2}'`
-        if [ -z "$ERROR" ]; then
+        if [ "$CONNECTION_STATUS" == "successful" ]; then
             echo "Succesfully connected to server ${SERVER}"
             return 0
         else
-            echo "Could not connect to server ${SERVER}, error message: ${ERROR}"
+            ERROR=`echo $RESULT | grep -o -E "\"connection_failure_reason\": \".+\"" | awk '{print $2}'`
+            echo "Integration failed, see https://docs.epsagon.com/docs/environments-kubernetes. Error message: ${ERROR}"
             return 1
         fi
     else
-        echo "Failed to test connection to server, please contact us"
+        echo "Connection to Epsagon failed, please see: https://docs.epsagon.com/docs/environments-kubernetes"
         return 1
     fi
 }
