@@ -145,7 +145,7 @@ function apply_role {
             ROLE_TOKEN=`${KUBECTL} -n epsagon-monitoring get secrets $SA_SECRET_NAME -o json | grep '\"token\"' | cut -d: -f2 | cut -d'"' -f2 | base64 --decode`
         fi
         if [ -z $ROLE_TOKEN ]; then
-            echo "Role creation failed, could not get role token"
+            echo "Deploying epsagon role to the cluster failed - could not extract role token"
         else
             apply_mutation_controller $EPSAGON_TOKEN $CONFIG $CONTEXT
             send_to_epsagon $EPSAGON_TOKEN $ROLE_TOKEN $CONFIG $CONTEXT
