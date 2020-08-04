@@ -72,27 +72,27 @@ function send_to_epsagon {
             echo " Please type the server endpoint:"
             read SERVER
         fi
-    else
-        # no context
-        echo "Can't add a cluster without context"
-    fi
-    if [ `which curl` ] ; then
-        if test_connection $SERVER $EPSAGON_TOKEN $ROLE_TOKEN; then 
-            echo "Integrating cluster into epsagon..."
-            curl -X POST https://api.epsagon.com/containers/k8s/add_cluster_by_token -d "{\"k8s_cluster_url\": \"$SERVER\", \"epsagon_token\": \"$EPSAGON_TOKEN\", \"cluster_token\": \"$ROLE_TOKEN\"}" -H 'Content-Type: application/json'
+        if [ `which curl` ] ; then
+            if test_connection $SERVER $EPSAGON_TOKEN $ROLE_TOKEN; then 
+                echo "Integrating cluster into epsagon..."
+                curl -X POST https://api.epsagon.com/containers/k8s/add_cluster_by_token -d "{\"k8s_cluster_url\": \"$SERVER\", \"epsagon_token\": \"$EPSAGON_TOKEN\", \"cluster_token\": \"$ROLE_TOKEN\"}" -H 'Content-Type: application/json'
+                echo ""
+            fi
+        else
+            echo "Could not find 'curl' command to send data to epsagon, please enter manually"
+            echo "server=${SERVER}"
+
+            echo ""
+            echo "--------"
+            echo ""
+            echo "The token for the epsagon role is: "
+            echo ""
+            echo $ROLE_TOKEN
             echo ""
         fi
     else
-        echo "Could not find 'curl' command to send data to epsagon, please enter manually"
-        echo "server=${SERVER}"
-
-        echo ""
-        echo "--------"
-        echo ""
-        echo "The token for the epsagon role is: "
-        echo ""
-        echo $ROLE_TOKEN
-        echo ""
+        # no context
+        echo "Can't add a cluster without context"
     fi
 }
 
