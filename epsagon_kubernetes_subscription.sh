@@ -10,6 +10,13 @@ ROLE_FILE=epsagon-role.yaml
 ROLE_URL=https://raw.githubusercontent.com/epsagon/epsagon-k8s-role/master/epsagon-role.yaml
 RANCHER_TOKEN=""
 
+function track {
+    EPSAGON_TOKEN=$1
+    EVENT_NAME=$2
+    EVENT_DATA=$3
+    curl -s -X POST https://track.epsagon.com/production/record -d "{\"event_name\": \"$EVENT_NAME\", \"token\": \"$EPSAGON_TOKEN\", \"event_data\": $EVENT_DATA}" -H 'Content-Type: application/json' > /dev/null
+}
+
 function fetch_epsagon_role {
     echo "Fetching ${ROLE_FILE}"
     if [ -f $ROLE_FILE ] ; then
@@ -179,12 +186,15 @@ function is_positive_answer {
 
 function apply_epsagon_on_all_contexts {
     echo "Welcome to Epsagon!"
+    track $1 "K8s Integration Started" "{\"Started\": \"True\"}"
+
     config_file_path="${HOME}/.kube/config"
     if [ ! does_config_file_exist ] ; then
         echo "Could not find any config file for kubectl"
         echo 'Please insert your kubectl config file path:'
         read config_file_path
     fi
+    
     echo -n "Are you using Rancher Management System? [Y/N] "
     read answer
     is_positive_answer $answer
