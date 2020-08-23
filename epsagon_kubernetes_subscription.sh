@@ -186,7 +186,6 @@ function is_positive_answer {
 
 function apply_epsagon_on_all_contexts {
     echo "Welcome to Epsagon!"
-    track $1 "K8s Integration Started" "{\"Started\": \"True\"}"
 
     config_file_path="${HOME}/.kube/config"
     if [ ! does_config_file_exist ] ; then
@@ -217,6 +216,8 @@ function apply_epsagon_on_all_contexts {
     done
 }
 
+
+track $1 "K8s Integration Started" "{\"Started\": \"True\"}"
 if [ $# -ne 1 ] ; then
     usage
 else
