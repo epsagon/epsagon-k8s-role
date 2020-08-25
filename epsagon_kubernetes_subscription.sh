@@ -156,7 +156,6 @@ function apply_role {
         if [ -z $ROLE_TOKEN ]; then
             echo "Deploying epsagon role to the cluster failed - could not extract role token"
         else
-            apply_mutation_controller $EPSAGON_TOKEN $CONTEXT $CONFIG
             send_to_epsagon $EPSAGON_TOKEN $ROLE_TOKEN $CONTEXT $CONFIG
         fi
     fi
@@ -226,7 +225,5 @@ if [ $# -ne 1 ] ; then
     usage
 else
     fetch_epsagon_role
-    clone_mutation_controller
     apply_epsagon_on_all_contexts $1
-    remove_mutation_controller
 fi
