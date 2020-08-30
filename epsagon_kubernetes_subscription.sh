@@ -63,6 +63,7 @@ function test_connection {
         fi
     else
         echo "Connection to Epsagon failed, please see: https://docs.epsagon.com/docs/environments-kubernetes"
+        track $EPSAGON_TOKEN "K8s Integration Failed" "{\"K8s Cluster URL\": \"$SERVER\", \"Failure Reason\": \"Connection to Epsagon for connection check failed\"}"
         return 1
     fi
 }
@@ -82,6 +83,7 @@ function send_to_epsagon {
         echo "Could not find the server endpoint for context: ${CONTEXT}."
         echo " Please type the server endpoint:"
         read SERVER
+        track $EPSAGON_TOKEN "K8s Integration Server Auto Detect Failed" "{\"Context\": \"$CONTEXT\", \"Manually Entered Server URL\": \"$SERVER\"}"
     fi
     if [ `which curl` ] ; then
         if test_connection $SERVER $EPSAGON_TOKEN $ROLE_TOKEN; then
@@ -153,8 +155,10 @@ function apply_role {
         else
             ROLE_TOKEN=`${KUBECTL} -n epsagon-monitoring get secrets $SA_SECRET_NAME -o json | grep '\"token\"' | cut -d: -f2 | cut -d'"' -f2 | base64 --decode`
         fi
+
         if [ -z $ROLE_TOKEN ]; then
             echo "Deploying epsagon role to the cluster failed - could not extract role token"
+            track $EPSAGON_TOKEN "K8s Integration Failed" "{\"Context\": \"$CONTEXT\", \"Failure Reason\": \"could not extract role token\"}"
         else
             send_to_epsagon $EPSAGON_TOKEN $ROLE_TOKEN $CONTEXT $CONFIG
         fi
@@ -203,6 +207,7 @@ function apply_epsagon_on_all_contexts {
     if [ $? -eq 0 ] ; then
         echo "Please insert your Rancher API Key:"
         read RANCHER_TOKEN
+        track $1 "K8s Integration With Rancher" "{\"Started\": \"True\"}"
     fi
     for context in `${KUBECTL} config get-contexts --no-headers | awk {'gsub(/^\*/, ""); print $1'}`; do
         echo ""
