@@ -186,7 +186,20 @@ function is_positive_answer {
 }
 
 function apply_epsagon_on_all_contexts {
-    echo "Welcome to Epsagon!"
+    echo "          Welcome to Epsagon!"
+    echo "
+             ######               # ##  
+             ######              #####  
+           ############## #     ######  
+           ###################  ######  
+      #### ###########################  
+     ##### ###########################  
+ ### ################################## 
+ ####  ###     ##   ###################  
+ ###                 #################   
+                          ##########    
+                          ############  
+                             ###    ###"
 
     config_file_path=""
     KUBECTL="kubectl"
@@ -204,18 +217,26 @@ function apply_epsagon_on_all_contexts {
         echo "Please insert your Rancher API Key:"
         read RANCHER_TOKEN
     fi
+
+    echo "Available clusters:"
+    index=1
     for context in `${KUBECTL} config get-contexts --no-headers | awk {'gsub(/^\*/, ""); print $1'}`; do
-        echo ""
-        echo "Now installing Epsagon to: $context"
-        echo -n "Would you like to proceed? [Y/N] "
-        read answer
-        is_positive_answer $answer
-        if [ $? -eq 0 ] ; then
+        echo "${index}. $context"
+        ((index = index + 1))
+    done
+
+    echo ""
+    echo "Choose clusters to integrate. Use spaces for multiple clusters, e.g: 1 2 3..."
+    read -a choices
+
+    index=1
+    for context in `${KUBECTL} config get-contexts --no-headers | awk {'gsub(/^\*/, ""); print $1'}`; do
+        if [[ " ${choices[@]} " =~ " ${index} " ]]; then
+            echo ""
+            echo "Now installing Epsagon to: $context"
             apply_role $1 $context $config_file_path
-        else
-            echo "skipping this cluster"
-            continue
         fi
+        ((index = index + 1))
     done
 }
 
