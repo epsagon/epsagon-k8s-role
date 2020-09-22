@@ -36,7 +36,7 @@ rules:
   verbs: ["get", "list", "watch"]
 - apiGroups: ["extensions", "apps"]
   resources: ["deployments"]
-  verbs: ["get", "list", "watch", "update"]
+  verbs: ["get", "list", "watch"]
 - nonResourceURLs: ["/metrics"]
   verbs: ["get"]
 ---
