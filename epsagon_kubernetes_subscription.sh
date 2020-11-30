@@ -85,24 +85,10 @@ function send_to_epsagon {
         read SERVER
         track $EPSAGON_TOKEN "K8s Integration Server Auto Detect Failed" "{\"Context\": \"$CONTEXT\", \"Manually Entered Server URL\": \"$SERVER\"}"
     fi
-    if [ `which curl` ] ; then
-        if test_connection $SERVER $EPSAGON_TOKEN $ROLE_TOKEN; then
-            echo "Integrating cluster into epsagon..."
-            curl -X POST https://api.epsagon.com/containers/k8s/add_cluster_by_token -d "{\"k8s_cluster_url\": \"$SERVER\", \"epsagon_token\": \"$EPSAGON_TOKEN\", \"cluster_token\": \"$ROLE_TOKEN\"}" -H 'Content-Type: application/json'
-            echo ""
-        fi
-    else
-        echo "Could not find 'curl' command to send data to epsagon, please enter manually"
-        echo "server=${SERVER}"
 
-        echo ""
-        echo "--------"
-        echo ""
-        echo "The token for the epsagon role is: "
-        echo ""
-        echo $ROLE_TOKEN
-        echo ""
-    fi
+    echo "Integrating cluster into epsagon..."
+    curl -X POST https://api.epsagon.com/containers/k8s/add_cluster_by_token -d "{\"k8s_cluster_url\": \"$SERVER\", \"epsagon_token\": \"$EPSAGON_TOKEN\", \"cluster_token\": \"$ROLE_TOKEN\"}" -H 'Content-Type: application/json'
+    echo ""
 }
 
 function remove_mutation_controller {
