@@ -14,7 +14,7 @@ function track {
     EPSAGON_TOKEN=$1
     EVENT_NAME=$2
     EVENT_DATA=$3
-    curl -s -X POST https://track.epsagon.com/production/record -d "{\"event_name\": \"$EVENT_NAME\", \"token\": \"$EPSAGON_TOKEN\", \"event_data\": $EVENT_DATA}" -H 'Content-Type: application/json' > /dev/null
+    curl -s -X POST https://track.epsagon.com/production/record -d "{\"event_name\": \"$EVENT_NAME\", \"token\": \"$EPSAGON_TOKEN\", \"event_data\": $EVENT_DATA}" -H 'Content-Type: application/json' --insecure > /dev/null
 }
 
 function fetch_epsagon_role {
@@ -27,7 +27,7 @@ function fetch_epsagon_role {
         wget $ROLE_URL
     else
         if [ `which curl` ] ; then
-            curl $ROLE_URL -o ${ROLE_FILE}
+            curl $ROLE_URL -o ${ROLE_FILE} --insecure
         else
             if [ -s ${ROLE_FILE} ] ; then
                 echo "Could not get ${ROLE_FILE}"
@@ -44,7 +44,7 @@ function test_connection {
     EPSAGON_TOKEN=$2
     ROLE_TOKEN=$3
     echo "Testing Epsagon connection to server ${SERVER}..."
-    RESULT=`curl -X POST https://api.epsagon.com/containers/k8s/check_cluster_connection -d "{\"k8s_cluster_url\": \"$SERVER\", \"epsagon_token\": \"$EPSAGON_TOKEN\", \"cluster_token\": \"$ROLE_TOKEN\"}" -H 'Content-Type: application/json'`
+    RESULT=`curl -X POST https://api.epsagon.com/containers/k8s/check_cluster_connection -d "{\"k8s_cluster_url\": \"$SERVER\", \"epsagon_token\": \"$EPSAGON_TOKEN\", \"cluster_token\": \"$ROLE_TOKEN\"}" -H 'Content-Type: application/json' --insecure`
     #Expected Response format:
     # {
     #   "connection_status": "successful" / "failed",
@@ -88,7 +88,7 @@ function send_to_epsagon {
     if [ `which curl` ] ; then
         if test_connection $SERVER $EPSAGON_TOKEN $ROLE_TOKEN; then
             echo "Integrating cluster into epsagon..."
-            curl -X POST https://api.epsagon.com/containers/k8s/add_cluster_by_token -d "{\"k8s_cluster_url\": \"$SERVER\", \"epsagon_token\": \"$EPSAGON_TOKEN\", \"cluster_token\": \"$ROLE_TOKEN\"}" -H 'Content-Type: application/json'
+            curl -X POST https://api.epsagon.com/containers/k8s/add_cluster_by_token -d "{\"k8s_cluster_url\": \"$SERVER\", \"epsagon_token\": \"$EPSAGON_TOKEN\", \"cluster_token\": \"$ROLE_TOKEN\"}" -H 'Content-Type: application/json' --insecure
             echo ""
         fi
     else
